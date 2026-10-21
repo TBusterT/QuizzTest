@@ -38,6 +38,8 @@ export function QuestionField({
 }: QuestionFieldProps) {
   const config = TYPE_CONFIG[question.type];
   const inputId = `q-text-${question.id}`;
+  const previewId = `answer-preview-${question.id}`;
+  const previewDescriptionId = `${previewId}-description`;
 
   return (
     <div className="question-card">
@@ -96,22 +98,45 @@ export function QuestionField({
       </div>
 
       {question.type === 'BOOLEAN' && (
-        <div className="boolean-preview-notice">
-          <span className="info-icon">💡</span>
-          <span>
-            Participants will choose between fixed <strong>True</strong> and{' '}
-            <strong>False</strong> options.
-          </span>
-        </div>
+        <fieldset
+          className="answer-preview"
+          aria-describedby={previewDescriptionId}
+        >
+          <legend className="form-label">Answer preview</legend>
+          <div className="question-options-preview">
+            <label className="preview-choice-pill">
+              <input type="radio" name={previewId} value="true" disabled />
+              <span>True</span>
+            </label>
+            <label className="preview-choice-pill">
+              <input type="radio" name={previewId} value="false" disabled />
+              <span>False</span>
+            </label>
+          </div>
+          <p id={previewDescriptionId} className="answer-preview-description">
+            Participants will choose True or False.
+          </p>
+        </fieldset>
       )}
 
       {question.type === 'INPUT' && (
-        <div className="input-preview-notice">
-          <span className="info-icon">✍️</span>
-          <span>
-            Participants will see a free-form short text field to type their
-            answer.
-          </span>
+        <div className="answer-preview">
+          <label className="form-label" htmlFor={previewId}>
+            Answer preview
+          </label>
+          <div className="input-preview-box">
+            <input
+              id={previewId}
+              className="form-input"
+              type="text"
+              placeholder="Short answer..."
+              aria-describedby={previewDescriptionId}
+              disabled
+            />
+          </div>
+          <p id={previewDescriptionId} className="answer-preview-description">
+            Participants will enter a short text answer.
+          </p>
         </div>
       )}
 

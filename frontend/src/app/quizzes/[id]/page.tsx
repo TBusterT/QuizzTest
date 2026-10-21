@@ -35,7 +35,10 @@ function QuestionView({
       <h3 className="question-item-text">{question.text}</h3>
 
       {question.type === 'BOOLEAN' && (
-        <div className="question-options-preview">
+        <fieldset className="question-options-preview">
+          <legend className="visually-hidden">
+            Options for {question.text}
+          </legend>
           <label className="preview-choice-pill">
             <input type="radio" name={`q-${question.id}`} disabled />
             <span>True</span>
@@ -44,7 +47,7 @@ function QuestionView({
             <input type="radio" name={`q-${question.id}`} disabled />
             <span>False</span>
           </label>
-        </div>
+        </fieldset>
       )}
 
       {question.type === 'INPUT' && (

@@ -82,29 +82,17 @@ export function CheckboxOptions({
         })}
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          marginTop: '0.85rem',
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="add-option-container">
         <button
           type="button"
           className="btn btn-secondary btn-sm add-option-btn"
-          style={{ marginTop: 0 }}
           disabled={isMaxOptions}
           onClick={onAddOption}
         >
           <PlusIcon /> Add another option
         </button>
         {isMaxOptions && (
-          <span
-            className="label-subtext"
-            style={{ color: 'var(--text-muted)' }}
-          >
+          <span className="label-subtext limit-note">
             Maximum {QUIZ_LIMITS.MAX_OPTIONS_PER_CHECKBOX} options reached
           </span>
         )}

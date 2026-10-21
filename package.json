@@ -7,10 +7,9 @@
     "backend"
   ],
   "engines": {
-    "node": ">=24.14.0 <25",
-    "npm": ">=11 <12"
+    "node": "^22.13.0 || ^24.0.0",
+    "npm": ">=10"
   },
-  "packageManager": "npm@11.0.0",
   "scripts": {
     "dev": "concurrently --kill-others --names frontend,backend --prefix-colors blue,green \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm run dev --workspace=@quiz-builder/frontend",
@@ -18,6 +17,8 @@
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspace=@quiz-builder/backend",
+    "package:source": "node scripts/package-source.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d --wait",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "concurrently": "10.0.6",
+    "fflate": "0.8.3",
     "prettier": "3.9.10"
   }
 }

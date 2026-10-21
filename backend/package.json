@@ -12,6 +12,8 @@
     "lint": "eslint . --max-warnings=0",
     "pretypecheck": "npm run prisma:generate",
     "typecheck": "tsc --noEmit",
+    "pretest": "npm run build",
+    "test": "node --test test/quizzes-http.test.mjs",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:migrate:dev": "prisma migrate dev"

@@ -292,10 +292,7 @@ export default function CreateQuizPage() {
               ))}
             </div>
             {isMaxQuestions && (
-              <span
-                className="label-subtext"
-                style={{ color: 'var(--text-muted)' }}
-              >
+              <span className="label-subtext limit-note">
                 Maximum {QUIZ_LIMITS.MAX_QUESTIONS} questions reached
               </span>
             )}

@@ -559,23 +559,24 @@ h1 {
   gap: 0.35rem;
 }
 
-/* Informational notices */
-.boolean-preview-notice,
-.input-preview-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.85rem 1rem;
-  background: var(--surface-subtle);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
-  margin-top: 1rem;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+/* Answer format previews in the builder */
+.answer-preview {
+  border: 0;
+  padding: 0;
+  margin: 1rem 0 0;
+  min-inline-size: 0;
 }
 
-.info-icon {
-  font-size: 1.1rem;
+.answer-preview .form-label {
+  padding: 0;
+  margin-bottom: 0.65rem;
+}
+
+.answer-preview-description {
+  margin: 0.65rem 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 /* Options Builder for Checkbox */
@@ -628,8 +629,20 @@ h1 {
   color: var(--success);
 }
 
-.add-option-btn {
+.add-option-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-top: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.add-option-btn {
+  margin-top: 0;
+}
+
+.limit-note {
+  color: var(--text-muted);
 }
 
 /* Add Question Bottom Bar */
@@ -791,6 +804,22 @@ h1 {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-inline-size: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .preview-choice-pill {

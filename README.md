@@ -1,45 +1,56 @@
 # Quiz Builder
 
-Повноцінний веб-застосунок для створення та перегляду опитувань (**Quiz Builder**) з підтримкою різних типів запитань: логічні (True / False), текстові (коротка відповідь) та вибір кількох варіантів (множинний вибір).
+[🇺🇦 Читати українською](README.uk.md)
 
-> [!NOTE]
-> За вимогами специфікації, питання типу `BOOLEAN` та `INPUT` є ознайомчими/відкритими та не зберігають правильної відповіді в базі даних. Питання типу `CHECKBOX` (множинний вибір) зберігають прапорець `isCorrect` та порядковий номер `order` для кожного доданого варіанта відповіді.
+A complete full-stack web application for creating and viewing quizzes (**Quiz Builder**) supporting multiple question types: Boolean (True / False), Input (short answer), and Checkbox (multiple choice).
 
 ---
 
-## Технологічний стек
+## Design Decisions
 
-- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Vanilla CSS (кастомна дизайн-система з glassmorphism, Google Fonts Plus Jakarta Sans через `next/font/google`, підтримка `prefers-reduced-motion` та мікро-анімації).
+- **Answer Storage by Question Type**: According to the project requirements and technical specification, this application implements a **Quiz Builder** (defining the questionnaire structure and schema), not a participant test-taking or grading engine:
+  - `BOOLEAN` (True / False) and `INPUT` (free-form text) questions define the interactive prompt and answer format on the client, but do not store a "correct answer" field in the database. Both the creation and detail pages show disabled previews of these answer formats.
+  - `CHECKBOX` (multiple choice) questions store structured option items in the `QuestionOption` table, where each option includes both an `isCorrect: boolean` flag (designating valid answer choices) and an `order: number`.
+- **Question & Option Ordering (`order`)**: The display sequence of questions and checkbox options is assigned by the server based on their index in the payload array upon creation. Retrieval queries order items deterministically via `order: 'asc'` (with `id: 'asc'` as a tie-breaker for Postgres).
+- **Race Condition Prevention on Deletion**: Quiz deletion performs `prisma.quiz.delete` directly wrapped in a `try/catch` block for Prisma error `P2025`, converting it to `404 Not Found` without an unnecessary preliminary `findUnique` query.
+- **Consistent Client & Backend Limits**: Field lengths and item counts (title ≤ 200, question text ≤ 500, option label ≤ 300, 2–20 options, 1–50 questions) are centralized in `QUIZ_LIMITS` on the client, matching the backend `class-validator` rules.
+- **Request Validation**: Each question and option must be an object; nested arrays and primitive values return `400` before reaching Prisma. The JSON body limit is 4 MiB, accommodating maximum-length quizzes, including escaped Unicode; larger requests return `413`.
+
+---
+
+## Tech Stack
+
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Vanilla CSS (custom design system featuring glassmorphism, Google Fonts Plus Jakarta Sans via `next/font/google`, `prefers-reduced-motion` accessibility support, and micro-animations).
 - **Backend**: NestJS 11, Express, TypeScript, `class-validator`, `class-transformer`.
-- **Database & ORM**: PostgreSQL 17 (Docker Compose на порту 5432), Prisma ORM v7 з кастомним генератором клієнта.
-- **Монорепозиторій**: npm workspaces (`@quiz-builder/frontend`, `@quiz-builder/backend`), `concurrently` для одночасного запуску.
+- **Database & ORM**: PostgreSQL 17 (Docker Compose on port 5432), Prisma ORM v7 with custom client output directory.
+- **Monorepo**: npm workspaces (`@quiz-builder/frontend`, `@quiz-builder/backend`), `concurrently` for running dev servers in parallel.
 
 ---
 
-## Локальні адреси
+## Local URLs
 
-| Адреса                               | Призначення                                        |
+| URL                                  | Purpose                                            |
 | ------------------------------------ | -------------------------------------------------- |
-| `http://localhost:3000/quizzes`      | Список усіх створених квізів (дашборд)             |
-| `http://localhost:3000/create`       | Сторінка створення нового квізу                    |
-| `http://localhost:3000/quizzes/<id>` | Сторінка перегляду квізу (read-only з критеріями)  |
-| `http://localhost:3001/quizzes`      | REST API для отримання та створення квізів         |
-| `http://localhost:3001/quizzes/<id>` | REST API для перегляду та видалення окремого квізу |
-| `http://localhost:3001/health`       | Перевірка стану бекенду (`{ "status": "ok" }`)     |
-| `127.0.0.1:5432`                     | Локальний інстанс PostgreSQL у Docker              |
+| `http://localhost:3000/quizzes`      | Quizzes dashboard (list of all quizzes)            |
+| `http://localhost:3000/create`       | Quiz creation builder page                         |
+| `http://localhost:3000/quizzes/<id>` | Quiz detail view page (read-only criteria)         |
+| `http://localhost:3001/quizzes`      | REST API endpoint to list and create quizzes       |
+| `http://localhost:3001/quizzes/<id>` | REST API endpoint to view and delete a quiz        |
+| `http://localhost:3001/health`       | Backend healthcheck service (`{ "status": "ok" }`) |
+| `127.0.0.1:5432`                     | Local PostgreSQL instance in Docker                |
 
 ---
 
-## Швидкий запуск
+## Quick Start
 
-### 1. Передумови
+### 1. Prerequisites
 
-- Node.js `>= 24.14.0 < 25` та npm `>= 11`
-- Встановлений та запущений Docker Desktop
+- Node.js 22.x (at least 22.13.0) or 24.x, and npm `>= 10`. Verified with Node.js `24.14.1`, also recorded in `.nvmrc`.
+- Docker Desktop installed and running
 
-### 2. Клонування та налаштування змінних оточення
+### 2. Environment Configuration
 
-Створіть локальні конфігураційні файли на основі прикладів:
+Create local configuration files from the provided templates:
 
 **PowerShell (Windows):**
 
@@ -57,83 +68,88 @@ cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
 ```
 
-### 3. Встановлення залежностей
+Docker Compose reads the root `.env`; NestJS and the Prisma CLI read `backend/.env`; Next.js reads `frontend/.env.local`. Keep the PostgreSQL credentials and port consistent with `DATABASE_URL`, and set `NEXT_PUBLIC_API_URL` to the backend URL. Local environment files are ignored by Git and excluded from the source archive.
+
+### 3. Install Dependencies
 
 ```powershell
-npm install
+npm ci
 ```
 
-### 4. Запуск бази даних
+### 4. Start Database Container
 
 ```powershell
 npm run db:up
 ```
 
-Ця команда запускає контейнер PostgreSQL 17 на порту `5432`.
+This launches a PostgreSQL 17 container on port `5432`.
 
-### 5. Застосування міграцій бази даних
+### 5. Run Database Migrations
 
 ```powershell
 npm run db:migrate
 ```
 
-Ця команда застосовує всі існуючі Prisma-міграції до запущеної бази даних (`init` та `add_option_order`).
+This applies all Prisma migrations (`init` and `add_option_order`) to the database.
 
-### 6. Генерація клієнта Prisma Client
+### 6. Generate Prisma Client
 
 ```powershell
 npm run db:generate
 ```
 
-Генерує типізований клієнт Prisma у `backend/src/generated/prisma`.
+Generates the typed Prisma Client in `backend/src/generated/prisma`.
 
-### 7. (Опціонально) Заповнення бази тестовими даними
-
-```powershell
-npm run db:seed
-```
-
-### 8. Запуск у режимі розробки
+### 7. Start Development Servers
 
 ```powershell
 npm run dev
 ```
 
-Ця команда запускає одночасно:
+This starts both services concurrently:
 
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:3001`
 
----
+### 8. (Optional) Seed Sample Data
 
-## REST API Ендпоінти
+> [!IMPORTANT]
+> The database seed script (`scripts/seed.mjs`) calls the REST API via HTTP (`POST /quizzes`). Run this command in a **second terminal window** while the backend development server is running (`npm run dev`).
 
-| Метод    | Шлях           | Опис                                  | Тіло запиту / Відповідь                                   |
-| :------- | :------------- | :------------------------------------ | :-------------------------------------------------------- |
-| `GET`    | `/health`      | Healthcheck сервісу                   | `{ "status": "ok" }`                                      |
-| `POST`   | `/quizzes`     | Створити новий квіз                   | `CreateQuizDto` -> повертає створений квіз (201)          |
-| `GET`    | `/quizzes`     | Отримати список усіх квізів           | Масив `{ id, title, createdAt, _count: { questions } }`   |
-| `GET`    | `/quizzes/:id` | Отримати повну інформацію про квіз    | Квіз із впорядкованими питаннями та варіантами відповідей |
-| `DELETE` | `/quizzes/:id` | Видалити квіз та каскадно всі питання | `204 No Content` (або `404 Not Found`)                    |
-
-### Підтримувані типи запитань (`QuestionType`):
-
-- `BOOLEAN`: питання з фіксованими варіантами «True / False».
-- `INPUT`: питання з полем для введення короткої відповіді.
-- `CHECKBOX`: питання множинного вибору (від 2 до 20 варіантів, хоча б один правильний).
-
-Порядок запитань та варіантів відповідей (`order`) автоматично виставляється сервером відповідно до індексу в переданому масиві.
+```powershell
+npm run db:seed
+```
 
 ---
 
-## Приклади роботи з API
+## REST API Endpoints
 
-### Варіант 1: PowerShell
+| Method   | Path           | Description                             | Request / Response                                         |
+| :------- | :------------- | :-------------------------------------- | :--------------------------------------------------------- |
+| `GET`    | `/health`      | Healthcheck endpoint                    | `{ "status": "ok" }`                                       |
+| `POST`   | `/quizzes`     | Create a new quiz                       | `CreateQuizDto` -> returns created quiz (201)              |
+| `GET`    | `/quizzes`     | List all quizzes                        | Array of `{ id, title, createdAt, _count: { questions } }` |
+| `GET`    | `/quizzes/:id` | Fetch quiz by ID                        | Quiz with ordered questions and options                    |
+| `DELETE` | `/quizzes/:id` | Delete quiz and its questions cascading | `204 No Content` (or `404 Not Found`)                      |
+
+### Supported Question Types (`QuestionType`):
+
+- `BOOLEAN`: Question with standard True / False choices.
+- `INPUT`: Question with a free-form single-line input field.
+- `CHECKBOX`: Multiple choice question (2–20 options, at least one marked correct).
+
+The display sequence (`order`) for both questions and options is preserved automatically according to array index.
+
+---
+
+## API Usage Examples
+
+### Option 1: PowerShell
 
 ```powershell
 $api = 'http://localhost:3001'
 
-# 1. Створити новий квіз із 3 типами запитань
+# 1. Create a quiz with 3 question types
 $body = @{
   title = 'Geography & Science Quiz'
   questions = @(
@@ -161,22 +177,22 @@ $body = @{
 $quiz = Invoke-RestMethod -Method Post "$api/quizzes" -ContentType 'application/json' -Body $body
 Write-Host "Created Quiz ID: $($quiz.id)"
 
-# 2. Отримати список усіх квізів
+# 2. List all quizzes
 Invoke-RestMethod "$api/quizzes"
 
-# 3. Отримати деталі створеного квізу
+# 3. Retrieve quiz details
 Invoke-RestMethod "$api/quizzes/$($quiz.id)"
 
-# 4. Видалити квіз
+# 4. Delete quiz
 Invoke-RestMethod -Method Delete "$api/quizzes/$($quiz.id)"
 ```
 
-### Варіант 2: cURL (Bash)
+### Option 2: cURL (Bash)
 
 ```bash
 API="http://localhost:3001"
 
-# 1. Створити новий квіз із 3 типами запитань
+# 1. Create a quiz with 3 question types
 QUIZ_JSON=$(curl -s -X POST "$API/quizzes" \
   -H "Content-Type: application/json" \
   -d '{
@@ -204,98 +220,124 @@ QUIZ_JSON=$(curl -s -X POST "$API/quizzes" \
   }')
 
 echo "$QUIZ_JSON"
-QUIZ_ID=$(echo "$QUIZ_JSON" | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+QUIZ_ID=$(printf '%s' "$QUIZ_JSON" | node -p 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).id')
 
-# 2. Отримати список усіх квізів
+# 2. List all quizzes
 curl -s -X GET "$API/quizzes"
 
-# 3. Отримати деталі квізу за ID
+# 3. Fetch quiz details by ID
 curl -s -X GET "$API/quizzes/$QUIZ_ID"
 
-# 4. Видалити квіз
+# 4. Delete quiz
 curl -s -X DELETE "$API/quizzes/$QUIZ_ID"
 ```
 
 ---
 
-## Структура проекту
+## Project Structure
 
 ```text
 Quiz/
-  compose.yaml                # Docker Compose конфігурація для PostgreSQL (порт 5432)
-  package.json                # Скрипти монорепозиторію (dev, db:*, lint, typecheck, build)
-  .env.example                # Шаблон конфігурації Docker Compose
+  compose.yaml                # Docker Compose configuration for PostgreSQL (port 5432)
+  package.json                # Monorepo scripts (dev, db:*, lint, typecheck, build)
+  .env.example                # Docker Compose environment template
+  .nvmrc                      # Verified Node.js version
   scripts/
-    seed.mjs                  # Скрипт заповнення бази зразковими даними через API
+    seed.mjs                  # Database seed script communicating via REST API
+    package-source.mjs        # Source ZIP creation with an explicit inclusion list
   backend/
-    .env.example              # Шаблон конфігурації для NestJS (порт 3001)
+    .env.example              # NestJS backend environment template (port 3001)
+    test/
+      quizzes-http.test.mjs    # HTTP validation and request size regression tests
     prisma/
-      schema.prisma           # Схема Prisma: моделі Quiz, Question, QuestionOption (з полем order)
-      migrations/             # SQL-міграції: init та add_option_order
-    prisma.config.ts          # Конфігурація Prisma CLI v7 з прив'язкою до backend/.env
+      schema.prisma           # Prisma schema: Quiz, Question, QuestionOption (with order)
+      migrations/             # SQL migrations: init and add_option_order
+    prisma.config.ts          # Prisma CLI v7 configuration bound to backend/.env
     src/
-      config/                 # Валідація змінних оточення (PORT, DATABASE_URL, FRONTEND_URL)
-      health/                 # Модуль GET /health
-      prisma/                 # PrismaService та PrismaModule
+      config/                 # Environment validation and shared HTTP configuration
+      health/                 # GET /health healthcheck module
+      prisma/                 # PrismaService and PrismaModule
       quizzes/
         dto/
-          create-quiz.dto.ts  # CreateQuizDto з trim, лімітами довжини та валідацією options
-        quizzes.controller.ts # REST контролер із явними типами повернення
-        quizzes.service.ts    # Сервіс CRUD операцій (order для питань та варіантів, захист від гонки P2025)
+          create-quiz.dto.ts  # CreateQuizDto with trimming, length limits, and option validation
+        quizzes.controller.ts # REST controller with explicit return types
+        quizzes.service.ts    # CRUD operations service (order for questions & options, P2025 race handling)
         quizzes.module.ts
-      main.ts                 # Точка входу NestJS із ValidationPipe та CORS
+      main.ts                 # NestJS bootstrap entry point with ValidationPipe and CORS
   frontend/
-    .env.example              # Шаблон конфігурації для Next.js
+    .env.example              # Next.js frontend environment template
     src/
       app/
-        layout.tsx            # Кореневий layout з Plus Jakarta Sans (next/font/google)
-        globals.css           # Дизайн-система (glassmorphism, prefers-reduced-motion)
-        page.tsx              # Редірект з '/' на '/quizzes'
+        layout.tsx            # Root layout with Plus Jakarta Sans (next/font/google)
+        globals.css           # Design system (glassmorphism, accessibility, animations)
+        page.tsx              # Root redirect from '/' to '/quizzes'
         create/
-          layout.tsx          # Серверний layout з metadata title ('Create quiz')
-          page.tsx            # Клієнтська сторінка створення квізу з валідацією лімітів
+          layout.tsx          # Server layout with metadata title ('Create quiz')
+          page.tsx            # Interactive client quiz builder with limit validations
         quizzes/
-          layout.tsx          # Серверний layout з metadata title ('Quizzes')
-          page.tsx            # Дашборд квізів з inline-банером помилки та AbortController
+          layout.tsx          # Server layout with metadata title ('Quizzes')
+          page.tsx            # Quizzes dashboard with inline error banners and AbortController
           [id]/
-            layout.tsx        # Серверний layout з metadata title ('Quiz details')
-            page.tsx          # Детальний перегляд квізу (404 через ApiError.status, скидання стану)
+            layout.tsx        # Server layout with metadata title ('Quiz details')
+            page.tsx          # Quiz details preview (404 via ApiError.status, state reset)
       components/
-        icons.tsx             # Централізовані SVG-іконки без дублювання
-        question-field.tsx    # Модульний компонент редагування одного питання з maxLength
-        checkbox-options.tsx  # Модульний компонент варіантів відповідей (ліміт 20 варіантів)
-        navigation.tsx        # Навігаційна панель із підсвічуванням активної сторінки
+        icons.tsx             # Centralized SVG icons
+        question-field.tsx    # Modular single question input component with maxLength
+        checkbox-options.tsx  # Modular checkbox options component (20 options limit)
+        navigation.tsx        # Header navbar with active route indicator
       lib/
-        question-types.ts     # Спільна конфігурація типів питань TYPE_CONFIG
-        quiz-limits.ts        # Константи лімітів форми, узгоджені з DTO бекенду
+        question-types.ts     # Shared question type config TYPE_CONFIG
+        quiz-limits.ts        # Client form limits synchronized with backend DTO
       services/
-        api-config.ts         # Базовий URL для API (fallback http://localhost:3001)
-        quizzes.ts            # Клієнт API, типізований клас ApiError та encodeURIComponent
+        api-config.ts         # Base API URL (fallback http://localhost:3001)
+        quizzes.ts            # API client service, typed ApiError class, and encodeURIComponent
 ```
 
 ---
 
-## Перевірка перед здачею
+## Pre-submission Checklist
 
-Перед здачею роботи виконайте автоматизовані перевірки коду:
+Before submitting, run all automated checks from the project root:
 
 ```powershell
-# 1. Перевірка лінтером ESLint (0 помилок, 0 попереджень)
+# 1. ESLint check (0 errors, 0 warnings)
 npm run lint
 
-# 2. Перевірка типів TypeScript
+# 2. TypeScript typecheck
 npm run typecheck
 
-# 3. Перевірка форматування коду Prettier
+# 3. Prettier format check
 npm run format:check
 
-# 4. Продакшн-білд фронтенду та бекенду
+# 4. HTTP regression tests (no running database required)
+npm test
+
+# 5. Production build for frontend and backend
 npm run build
 ```
 
-### Ручний сценарій перевірки:
+`npm test` builds the backend, then exercises its real controller, DTO validation and HTTP configuration with a stubbed persistence service. It covers malformed question/option structures, all three question types, maximum-size quizzes (including escaped Unicode), malformed JSON and the body size limit. These tests do not replace database integration checks.
 
-1. **Створення квізу:** відкрити `http://localhost:3000/create`, заповнити назву та додати 3 типи питань (`BOOLEAN`, `INPUT`, `CHECKBOX` із варіантами відповідей і позначеними правильними). Натиснути кнопку «Save and publish quiz».
-2. **Перегляд дашборду:** додаток автоматично перенаправить на `http://localhost:3000/quizzes`, де новий квіз відображається у списку з правильною кількістю запитань.
-3. **Детальний перегляд:** клікнути на квіз і відкрити `http://localhost:3000/quizzes/<id>` — переконатися, що всі питання відображаються у read-only режимі, а правильні варіанти множинного вибору позначені зеленим тегом «Correct answer».
-4. **Видалення:** повернутися до списку квізів та натиснути кнопку з іконкою кошика 🗑. Після підтвердження квіз миттєво зникає зі списку, а повторний запит за цим ID повертає статус 404 «Quiz not found».
+### Source Archive
+
+```powershell
+npm run package:source
+```
+
+Produces `release/quiz-builder-source.zip` with source code, migrations, tests, configuration, environment templates and the lockfile. It excludes local `.env` files, `.git`, `node_modules`, generated clients, build output and verification artifacts. On a clean machine, extract the archive and follow Quick Start above. The `release/` directory is ignored by Git and Prettier.
+
+### Dependency Audit
+
+```powershell
+npm audit --omit=dev
+npm audit
+```
+
+As of 2026-10-21, the production dependency audit reports no vulnerabilities. The full audit reports five related high-severity findings in the development-only ESLint dependency chain (`eslint-config-next` → `@next/eslint-plugin-next` → `fast-glob` → `micromatch` → `braces`). The latest available `braces` version, 3.0.3, has no published fix for [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm). Recheck for an upstream patch before submission; `npm audit fix --force` currently proposes an incompatible Next.js lint configuration downgrade.
+
+### Manual Verification Scenario:
+
+1. **Create Quiz**: Open `http://localhost:3000/create`, provide a title and add 3 question types (`BOOLEAN`, `INPUT`, `CHECKBOX` with choices and correct answer marks). Click «Save and publish quiz».
+2. **Dashboard Overview**: The app redirects to `http://localhost:3000/quizzes`, where the newly created quiz appears in the list with the correct question count.
+3. **Detail Preview**: Click on the quiz to open `http://localhost:3000/quizzes/<id>` — verify all questions are rendered read-only, and correct checkbox options are badged with a green «Correct answer» tag.
+4. **Deletion**: Return to the quiz list and click the trash icon 🗑 button. Confirm the dialog; the quiz is removed immediately from the list, and any subsequent GET request for that ID returns a 404 «Quiz not found».

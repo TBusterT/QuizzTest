@@ -5,6 +5,7 @@ import {
   IsBoolean,
   IsEnum,
   IsNotEmpty,
+  IsObject,
   IsString,
   MaxLength,
   registerDecorator,
@@ -94,6 +95,8 @@ export class QuestionDto {
       q.type === QuestionType.CHECKBOX || q.options !== undefined,
   )
   @IsValidQuestionOptions()
+  @IsArray()
+  @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => QuestionOptionDto)
   options?: QuestionOptionDto[];
@@ -111,6 +114,7 @@ export class CreateQuizDto {
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(50)
+  @IsObject({ each: true })
   @ValidateNested({ each: true })
   @Type(() => QuestionDto)
   questions!: QuestionDto[];
