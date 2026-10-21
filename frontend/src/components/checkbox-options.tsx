@@ -1,5 +1,6 @@
 'use client';
 
+import { QUIZ_LIMITS } from '@/lib/quiz-limits';
 import { PlusIcon, TrashIcon } from './icons';
 
 export interface OptionDraft {
@@ -57,7 +58,8 @@ export function CheckboxOptions({
                 id={inputId}
                 className="form-input"
                 type="text"
-                  placeholder={`Option ${oIdx + 1} label`}
+                maxLength={QUIZ_LIMITS.MAX_OPTION_LABEL_LENGTH}
+                placeholder={`Option ${oIdx + 1} label`}
                 value={opt.label}
                 onChange={(e) =>
                   onUpdateOption(opt.id, { label: e.target.value })

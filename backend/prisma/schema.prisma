@@ -38,4 +38,5 @@ model QuestionOption {
   question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   label      String
   isCorrect  Boolean  @default(false)
+  order      Int      @default(0)
 }

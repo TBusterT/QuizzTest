@@ -10,6 +10,7 @@ import {
   type QuestionType,
 } from '@/services/quizzes';
 import { TYPE_CONFIG } from '@/lib/question-types';
+import { QUIZ_LIMITS } from '@/lib/quiz-limits';
 import { ArrowLeftIcon, PlusIcon } from '@/components/icons';
 import { QuestionField, type QuestionDraft } from '@/components/question-field';
 import type { OptionDraft } from '@/components/checkbox-options';
@@ -227,6 +228,7 @@ export default function CreateQuizPage() {
             id="quiz-title"
             className="form-input form-input-lg"
             type="text"
+            maxLength={QUIZ_LIMITS.MAX_TITLE_LENGTH}
             placeholder="e.g. World Capitals & Geography"
             value={title}
             onChange={(e) => setTitle(e.target.value)}

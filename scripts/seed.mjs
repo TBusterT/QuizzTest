@@ -1,4 +1,16 @@
-const API = process.env.API_URL || 'http://localhost:3001';
+import { readFileSync } from 'node:fs';
+
+function resolveApiUrl() {
+  if (process.env.API_URL) return process.env.API_URL;
+  try {
+    const env = readFileSync('backend/.env', 'utf8');
+    const port = env.match(/^PORT=(\d+)/m)?.[1];
+    if (port) return `http://localhost:${port}`;
+  } catch {}
+  return 'http://localhost:3001';
+}
+
+const API = resolveApiUrl();
 
 const sampleQuiz = {
   title: 'Sample Science & Geography Quiz',

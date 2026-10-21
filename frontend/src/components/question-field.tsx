@@ -2,6 +2,7 @@
 
 import type { QuestionType } from '@/services/quizzes';
 import { TYPE_CONFIG } from '@/lib/question-types';
+import { QUIZ_LIMITS } from '@/lib/quiz-limits';
 import { CheckboxOptions, type OptionDraft } from './checkbox-options';
 import { ArrowDownIcon, ArrowUpIcon, TrashIcon } from './icons';
 
@@ -87,7 +88,8 @@ export function QuestionField({
           id={inputId}
           className="form-input"
           type="text"
-            placeholder="Enter the question text here..."
+          maxLength={QUIZ_LIMITS.MAX_QUESTION_TEXT_LENGTH}
+          placeholder="Enter the question text here..."
           value={question.text}
           onChange={(e) => onUpdateQuestion({ text: e.target.value })}
         />

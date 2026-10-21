@@ -8,6 +8,7 @@ export interface QuestionOption {
   id: string;
   label: string;
   isCorrect: boolean;
+  order: number;
 }
 
 export interface Question {
